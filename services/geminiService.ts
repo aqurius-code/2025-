@@ -1,6 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
 export const polishText = async (originalText: string, type: 'enrich' | 'simplify'): Promise<string> => {
   const prompt = type === 'enrich' 
@@ -10,7 +10,7 @@ export const polishText = async (originalText: string, type: 'enrich' | 'simplif
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: { text: prompt },
+      contents: prompt,
     });
     return response.text?.trim() || originalText;
   } catch (error) {
