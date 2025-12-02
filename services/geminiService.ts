@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+import { UploadedImage } from '../types';
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
@@ -15,6 +16,42 @@ export const polishText = async (originalText: string, type: 'enrich' | 'simplif
     return response.text?.trim() || originalText;
   } catch (error) {
     console.error("Gemini API Error:", error);
+    throw error;
+  }
+};
+
+export const generateNoteFromImages = async (images: UploadedImage[], instruction: string): Promise<string> => {
+  // Convert images to Gemini Part objects
+  const imageParts = images.map(img => ({
+    inlineData: {
+      mimeType: img.mimeType,
+      data: img.base64
+    }
+  }));
+
+  const prompt = `
+    당신은 고등학교 생활기록부 작성 전문가입니다.
+    제공된 이미지들(활동 사진, 누가기록 엑셀 캡처 등)을 상세히 분석하여 '창의적 체험활동' 특기사항을 작성해주세요.
+
+    [작성 가이드]
+    1. 이미지에서 식별 가능한 활동 날짜, 구체적인 활동 내용, 학생의 역할 등을 근거로 활용하세요.
+    2. 추가 요청사항: ${instruction || "학생의 구체적인 성장과 활동 태도가 잘 드러나도록 긍정적이고 교육적인 어조로 작성해주세요."}
+    3. 문장은 개조식이 아닌 완성된 서술형 문장으로 자연스럽게 이어주세요.
+    4. "6번과 같은" 스타일이 요청된 경우, 일반적인 생기부의 우수 예시(구체적 사례 + 배우고 느낀점 + 후속 활동) 형식을 따르세요.
+
+    결과물은 오직 생기부 특기사항 텍스트만 출력하세요.
+  `;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: {
+        parts: [...imageParts, { text: prompt }]
+      }
+    });
+    return response.text?.trim() || "생성된 내용이 없습니다. 이미지를 다시 확인해주세요.";
+  } catch (error) {
+    console.error("Gemini Vision API Error:", error);
     throw error;
   }
 };
