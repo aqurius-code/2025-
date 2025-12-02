@@ -1,9 +1,20 @@
 import { GoogleGenAI } from "@google/genai";
 import { UploadedImage } from '../types';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+// Initialize safely to prevent crash if env var is missing during render
+const getAiClient = () => {
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    console.warn("API Key is missing. AI features will not work.");
+    return null;
+  }
+  return new GoogleGenAI({ apiKey });
+};
 
 export const polishText = async (originalText: string, type: 'enrich' | 'simplify'): Promise<string> => {
+  const ai = getAiClient();
+  if (!ai) return "API 키가 설정되지 않았습니다. 설정(환경변수)을 확인해주세요.";
+
   const prompt = type === 'enrich' 
     ? `다음 생기부 특기사항 문구를 더 구체적이고 교육적인 표현으로 풍성하게 다듬어주세요. 원래 의미는 유지하되, 학생의 성장이 돋보이도록 문장을 업그레이드해주세요. 결과물은 완성된 문장 하나만 출력하세요.\n\n문구: "${originalText}"`
     : `다음 생기부 특기사항 문구를 간결하고 명확하게 요약해주세요. 결과물은 문장 하나만 출력하세요.\n\n문구: "${originalText}"`;
@@ -16,11 +27,14 @@ export const polishText = async (originalText: string, type: 'enrich' | 'simplif
     return response.text?.trim() || originalText;
   } catch (error) {
     console.error("Gemini API Error:", error);
-    throw error;
+    return "AI 서비스 연결 중 오류가 발생했습니다.";
   }
 };
 
 export const generateNoteFromImages = async (images: UploadedImage[], instruction: string): Promise<string> => {
+  const ai = getAiClient();
+  if (!ai) return "API 키가 설정되지 않았습니다. 설정(환경변수)을 확인해주세요.";
+
   // Convert images to Gemini Part objects
   const imageParts = images.map(img => ({
     inlineData: {
@@ -52,6 +66,6 @@ export const generateNoteFromImages = async (images: UploadedImage[], instructio
     return response.text?.trim() || "생성된 내용이 없습니다. 이미지를 다시 확인해주세요.";
   } catch (error) {
     console.error("Gemini Vision API Error:", error);
-    throw error;
+    return "이미지 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
   }
 };
