@@ -269,7 +269,7 @@ const ChangcheTab: React.FC = () => {
                 value={imageInstruction}
                 onChange={(e) => setImageInstruction(e.target.value)}
                 className="w-full p-3 rounded-lg border border-indigo-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none min-h-[100px]"
-                placeholder="예: 6번과 같은 스타일로 작성해줘. 구체적인 활동 날짜를 꼭 포함하고, 학생의 리더십이 드러나게 써줘."
+                placeholder="예: 1~5번 사진은 활동 내용이고, 6번 사진과 같은 스타일로 작성해줘."
               />
               <button 
                 onClick={handleImageGenerate}
